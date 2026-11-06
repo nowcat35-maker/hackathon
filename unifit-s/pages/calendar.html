@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../css/style.css"><title>내 캘린더 - UniFit-S</title></head><body data-root="../">
+<div class="banner"><div class="wrap"><h2>나만의 일정 캘린더</h2><p>관심 · 준비 중 · 지원한 공고의 마감일을 한눈에 확인하고, 내 캘린더 앱으로 내보내세요.</p></div></div>
+<div class="wrap" style="margin-top:20px">
+<div class="calhead"><button type="button" class="btn line" id="pv" aria-label="이전 달">◀</button><h2 id="ym"></h2><button type="button" class="btn line" id="nx" aria-label="다음 달">▶</button><button type="button" class="btn line" id="td">오늘</button>
+<span class="legend"><span><i style="background:#c7d2fe"></i>장학금</span><span><i style="background:#fbcfe8"></i>대외활동</span><span><i style="background:#bbf7d0"></i>공모전</span></span></div>
+<div class="cal" id="cal"></div>
+<div class="two" style="margin-top:20px"><div class="panel"><h3 id="lt"></h3><div id="ls"></div></div>
+<div><div class="panel" id="xp"></div><div class="panel"><h3>상시모집 · 마감일 없음</h3><div id="al"></div></div></div></div>
+</div>
+<script src="../js/data.js"></script><script src="../js/auth.js"></script><script src="../js/layout.js"></script><script>
+if(!me()){location.href='login.html?next=calendar.html'}
+const its=trackedIds().map(id=>ITEMS.find(x=>x.id===id)).filter(Boolean);
+const pad=n=>String(n).padStart(2,'0'),key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const todayK=key(new Date()),CC={'장학금':'c1','대외활동':'c2','공모전':'c3'};
+let cur=new Date();cur.setDate(1);let sel=null;
+const link=i=>'detail.html?id='+encodeURIComponent(i.id);
+const done=i=>['done','pass','fail'].includes(stageOf(i.id));
+function row(i){return `<div class="row2"><span class="dday">${dday(i.end)}</span><div><a class="t" href="${link(i)}">${esc(i.title)}</a><small>${esc(i.org)} · ${STAGE_T[stageOf(i.id)]}${i.end?' · 마감 '+i.end:''}</small></div></div>`}
+const up=its.filter(i=>i.end&&daysLeft(i)>=0);
+$('xp').innerHTML=`<h3>${ico('download',18)} 캘린더로 내보내기</h3><p style="color:var(--gray);font-size:14px;margin:8px 0 14px;line-height:1.6">마감 예정 ${up.length}건을 <b>.ics</b> 파일로 받아 구글 · 애플 · 네이버 캘린더에 넣을 수 있어요. 마감 3일 전과 하루 전에 알림도 함께 들어가요.</p><button type="button" class="btn" id="ics" style="width:100%" ${up.length?'':'disabled'}>${ico('download',17)} .ics 파일 내려받기</button>
+<ol class="how"><li>파일을 받은 뒤 <b>구글 캘린더 → 설정 → 가져오기 및 내보내기</b>로 가요.</li><li><b>가져오기</b>에서 받은 파일을 고르면 끝!</li></ol>`;
+$('ics').onclick=()=>{downloadICS(up,'unifit-s-일정.ics');toast(up.length+'건의 마감 일정을 내려받았어요')};
+function draw(){
+ const y=cur.getFullYear(),m=cur.getMonth(),off=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),n=Math.ceil((off+dim)/7)*7;
+ $('ym').textContent=y+'년 '+(m+1)+'월';
+ let h=['일','월','화','수','목','금','토'].map(w=>`<div class="wd">${w}</div>`).join('');
+ for(let k=0;k<n;k++){
+  const d=new Date(y,m,1-off+k),kk=key(d),ev=its.filter(i=>i.end===kk);
+  h+=`<div class="day ${d.getMonth()!==m?'off':''} ${kk===todayK?'today':''} ${kk===sel?'sel':''}" data-k="${kk}"><span class="dn ${d.getDay()===0?'su':''}">${d.getDate()}</span>`+
+   ev.slice(0,3).map(i=>`<a class="ev ${CC[i.cat]} ${daysLeft(i)<0?'past':''} ${done(i)?'dn2':''}" href="${link(i)}" title="${esc(i.title)}">${done(i)?ico('check',11)+' ':''}${esc(i.title)}</a>`).join('')+(ev.length>3?`<div class="more1">+${ev.length-3}개 더</div>`:'')+'</div>';
+ }
+ $('cal').innerHTML=h;
+ const list=sel?its.filter(i=>i.end===sel):its.filter(i=>i.end&&i.end.startsWith(y+'-'+pad(m+1))).sort(byEnd);
+ $('lt').textContent=sel?sel+' 일정':y+'년 '+(m+1)+'월 마감 일정';
+ $('ls').innerHTML=list.length?list.map(row).join(''):(its.length?'<p class="empty">이 기간에 마감되는 공고가 없어요.</p>':'<p class="empty">아직 담은 공고가 없어요.<br>공고 상세에서 <b>관심 저장</b>을 누르면 여기에 일정이 생겨요.<br><br><a class="btn" href="../index.html">공고 보러가기</a></p>');
+ const un=its.filter(i=>!i.end);$('al').innerHTML=un.length?un.map(row).join(''):'<p class="empty" style="padding:14px">없어요.</p>';
+}
+$('cal').addEventListener('click',e=>{if(e.target.closest('a'))return;const d=e.target.closest('.day');if(!d)return;sel=sel===d.dataset.k?null:d.dataset.k;draw()});
+$('pv').onclick=()=>{cur.setMonth(cur.getMonth()-1);sel=null;draw()};$('nx').onclick=()=>{cur.setMonth(cur.getMonth()+1);sel=null;draw()};$('td').onclick=()=>{cur=new Date();cur.setDate(1);sel=null;draw()};
+draw();
+</script></body></html>

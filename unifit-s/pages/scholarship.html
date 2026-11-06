@@ -1,0 +1,9 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../css/style.css"><title>AI 장학금 검색 - UniFit-S</title></head><body data-root="../">
+<div class="banner"><div class="wrap"><h2>AI 맞춤 검색</h2><div class="srow"><input id="kw" type="text" placeholder="검색어" autocomplete="off"><select id="cat"><option>전체</option><option>장학금</option><option>대외활동</option><option>공모전</option></select><select id="sort" class="sort"></select><button class="btn" id="go" type="button">검색</button></div><div class="subs on-banner" id="subs" style="display:none"></div></div></div>
+<section><div class="wrap"><p id="n" style="margin-bottom:12px;color:#6b7280"></p><div class="grid" id="list"></div></div></section>
+<script src="../js/data.js"></script><script src="../js/auth.js"></script><script src="../js/layout.js"></script><script>
+kw.value=new URLSearchParams(location.search).get('q')||'';
+let S='전체';
+function run(){const k=kw.value.trim();subBar(document.getElementById('subs'),cat.value,S,x=>{S=x;run()});const r=sortItems(ITEMS.filter(i=>(cat.value==='전체'||i.cat===cat.value)&&subOK(i,cat.value,S)&&(!k||(i.title+i.org+i.field+i.target+i.amount+i.region).includes(k))),sort.value);n.textContent='검색 결과 '+r.length+'건';list.innerHTML=r.length?r.map(card).join(''):'<div class="empty">결과가 없어요.</div>'}
+sortBox(sort,run);cat.onchange=()=>{S='전체';run()};go.onclick=run;kw.addEventListener('keydown',e=>{if(e.key==='Enter')run()});const bd=document.createElement('div');n.before(bd);window.addEventListener('aiscores',()=>{run();bd.innerHTML=aiBadge()});run();
+</script></body></html>

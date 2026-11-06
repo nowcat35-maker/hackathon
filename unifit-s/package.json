@@ -1,0 +1,8 @@
+{
+ "name": "unifit-s",
+ "version": "1.0.0",
+ "scripts": {
+  "start": "node server/server.js",
+  "bundle": "node bundle.js"
+ }
+}

@@ -1,0 +1,20 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../css/style.css"><title>마이페이지 - UniFit-S</title></head><body data-root="../">
+<div class="banner"><div class="wrap"><h2 id="hi"></h2></div></div>
+<div class="wrap" style="margin-top:20px">
+<div class="tabs" id="mt"><button class="tab on" data-p="p1">프로필 수정</button><button class="tab" data-p="p2">비밀번호 변경</button><button class="tab" data-p="p3">저장한 공고</button><button class="tab" data-p="p4">지원한 공고</button></div>
+<form class="panel" id="p1" style="max-width:520px"><div id="pbox"></div><br><button class="btn">저장하기</button></form>
+<form class="panel" id="p2" style="max-width:520px;display:none"><label>현재 비밀번호</label><input id="o" type="password" required><label>새 비밀번호 (4자 이상)</label><input id="n1" type="password" required minlength="4"><label>새 비밀번호 확인</label><input id="n2" type="password" required><p class="err" id="e2"></p><br><button class="btn">변경하기</button></form>
+<div id="p3" style="display:none"><div class="grid" id="bm"></div></div>
+<div id="p4" style="display:none"><div class="grid" id="ap"></div></div>
+</div>
+<script src="../js/data.js"></script><script src="../js/auth.js"></script><script src="../js/layout.js"></script><script>
+if(!me()){location.href='login.html?next=mypage.html'}
+$('hi').textContent=(getP()?.name||'')+'님, 안녕하세요!';
+$('pbox').innerHTML=profileHTML;fillProfile(getP());
+$('p1').onsubmit=e=>{e.preventDefault();const p=readProfile();upd(m=>{m.profile=p});alert('프로필이 저장됐어요!');location.reload()};
+$('p2').onsubmit=e=>{e.preventDefault();if($('n1').value!==$('n2').value){$('e2').textContent='새 비밀번호가 서로 달라요.';return}
+const r=changePw($('o').value,$('n1').value);if(r)$('e2').textContent=r;else{alert('비밀번호가 바뀌었어요!');$('p2').reset();$('e2').textContent=''}};
+const B=ITEMS.filter(i=>getB().includes(i.id));$('bm').innerHTML=B.length?B.map(card).join(''):'<div class="empty">저장한 공고가 없어요.</div>';
+const A=getA();$('ap').innerHTML=A.length?A.map(a=>{const i=ITEMS.find(x=>x.id===a.id);return i?card(i).replace('<small>'+i.org,'<small class="score">✅ 지원일 '+a.date+'</small><small>'+i.org):''}).join(''):'<div class="empty">지원한 공고가 없어요.</div>';
+$('mt').onclick=e=>{const p=e.target.dataset.p;if(!p)return;[...$('mt').children].forEach(b=>b.classList.toggle('on',b.dataset.p===p));['p1','p2','p3','p4'].forEach(x=>$(x).style.display=x===p?'block':'none')};
+</script></body></html>

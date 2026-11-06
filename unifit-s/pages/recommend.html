@@ -1,0 +1,12 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../css/style.css"><title>AI 맞춤 추천 - UniFit-S</title></head><body data-root="../">
+<div class="banner"><div class="wrap"><h2 id="t">AI가 골라준 맞춤 공고</h2><p id="s"></p><p class="bsub">점수와 함께 <b>왜 맞는지</b> 이유를 보여드려요.</p></div></div>
+<section><div class="wrap"><div class="bar"><div class="tabs" id="tabs"></div><select id="sort" class="sort" title="정렬"></select></div><div class="subs" id="subs" style="display:none"></div><div class="grid" id="list"></div></div></section>
+<script src="../js/data.js"></script><script src="../js/auth.js"></script><script src="../js/layout.js"></script><script>
+const p=getP();s.innerHTML=p?esc(p.name)+'님의 프로필 기준 추천입니다.':'<a href="login.html" style="color:#2f5bff">로그인</a>하고 프로필을 만들면 더 정확해져요.';
+const L=document.getElementById('list');
+const bd=document.createElement('div');document.querySelector('.bar').before(bd);const showBd=()=>bd.innerHTML=aiBadge();
+let C='전체',S='전체';const SB=document.getElementById('sort');
+function show(c){if(c){C=c;S='전체'}subBar(document.getElementById('subs'),C,S,x=>{S=x;show()});const r=sortItems(ITEMS.filter(i=>(C==='전체'||i.cat===C)&&subOK(i,C,S)),SB.value);L.innerHTML=r.length?r.map(recCard).join(''):'<div class="empty">공고가 없어요.</div>'}
+sortBox(SB,()=>show());
+tabs(document.getElementById('tabs'),show);show('전체');window.addEventListener('aiscores',()=>{show();showBd()});
+</script></body></html>

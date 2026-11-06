@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UniFit-S</title><link rel="stylesheet" href="css/style.css"></head>
+<body data-root="">
+<div class="hero"><div class="wrap"><div class="hl">
+<span class="eyebrow" id="eb"></span>
+<h1>찾는 데서 끝나지 않아요.<br><span>지원할 수 있는지 먼저 알려드려요.</span></h1>
+<p>장학금 · 대외활동 · 공모전을 한 곳에서 보고, 자격 진단부터 마감 관리까지 이어서 챙겨요.</p>
+<div id="heroAct" class="hact"></div>
+<div class="hstats"><div><b id="st1">0</b><span>접수 중 공고</span></div><div><b id="st2">0</b><span>7일 안에 마감</span></div><div><b>3</b><span>장학금 · 대외활동 · 공모전</span></div></div></div>
+<div class="hero-box"><b class="hb" id="hb"></b><input id="q" placeholder="예: 광고, 데이터, 봉사" style="margin:12px 0"><button class="btn" style="width:100%" id="go" type="button">검색</button><p class="hint">공고명 · 기관 · 분야 · 대상 · 지역에서 찾아요</p></div></div></div>
+
+<section id="alerts" style="display:none;padding-bottom:0"><div class="wrap"><div class="alertbox"><b class="at" id="at"></b><div class="alist" id="alist"></div><a class="more" href="pages/board.html">지원 현황 보기 <span id="mo"></span></a></div></div></section>
+
+<section id="picks" style="display:none;padding-bottom:0"><div class="wrap"><div class="sh"><div><h2>나에게 맞는 공고 TOP 3</h2><p>프로필 · 자격 · 마감일을 함께 보고 골랐어요. 이유도 같이 보여드려요.</p></div><a class="more" href="pages/recommend.html">전체 추천 보기</a></div><div class="grid" id="pk"></div></div></section>
+
+<section><div class="wrap"><div class="sh"><div><h2>UniFit-S가 다른 이유</h2><p>공고를 모아 보여 주는 데서 멈추지 않고, 지원 성공까지 이어지게 만들었어요.</p></div></div>
+<div class="feats" id="feats"></div></div></section>
+
+<section style="padding-top:8px"><div class="wrap"><div class="sh"><div><h2>마감 임박 공고</h2><p>가장 먼저 마감되는 순서예요.</p></div></div><div class="grid" id="soon"></div></div></section>
+<section style="padding-top:8px"><div class="wrap"><div class="sh"><div><h2>카테고리별 공고</h2></div></div><div class="bar"><div class="tabs" id="tabs"></div><select id="sort" class="sort" title="정렬"></select></div><div class="subs" id="subs" style="display:none"></div><div class="grid" id="list"></div></div></section>
+<section><div class="wrap"><div class="cta"><div><h2 style="color:#fff;margin:0 0 6px" id="ct"></h2><p id="cp"></p></div><a class="btn white" id="cb2"></a></div></div></section>
+<script src="js/data.js"></script><script src="js/auth.js"></script><script src="js/layout.js"></script>
+<script>
+const m=me(),open=ITEMS.filter(i=>daysLeft(i)>=0);
+$('eb').innerHTML=ico('shield',15)+' 대학생 지원 성공률을 높이는 공고 플랫폼';
+$('hb').innerHTML=ico('search',17)+' 빠른 검색';
+$('st1').textContent=open.length;$('st2').textContent=open.filter(i=>daysLeft(i)<=7).length;
+const act=$('heroAct');
+act.innerHTML=m?`<span class="welcome">${ico('user',18)} ${esc(m.profile.name||m.id)}님, 오늘도 좋은 공고를 찾아봐요!</span><a class="btn" href="pages/board.html">${ico('board',17)} 지원 현황 보드</a><a class="btn line" href="pages/calendar.html">${ico('calendar',17)} 내 캘린더</a>`
+ :`<a class="btn" href="pages/login.html">로그인 / 회원가입</a><a class="btn line" href="#cats">공고 둘러보기</a>`;
+/* 지원한 공고 · 준비 중인 공고의 마감 알림 */
+const track=trackedIds().map(id=>({i:ITEMS.find(x=>x.id===id),s:stageOf(id)})).filter(x=>x.i&&['done','prep'].includes(x.s)&&x.i.end&&daysLeft(x.i)>=0).sort((a,b)=>daysLeft(a.i)-daysLeft(b.i));
+if(track.length){
+ $('alerts').style.display='block';$('at').innerHTML=ico('bell',18)+' 마감 알림';$('mo').innerHTML=ico('arrow',15);
+ $('alist').innerHTML=track.map(x=>`<a class="achip ${daysLeft(x.i)<=3?'hot':''}" href="pages/detail.html?id=${encodeURIComponent(x.i.id)}"><em>${STAGE_T[x.s]}</em><span>${esc(x.i.title)}</span><b>${dday(x.i.end)}</b></a>`).join('');
+}
+if(m){const pk=topPicks(3);if(pk.length){$('picks').style.display='block';$('pk').innerHTML=pk.map(recCard).join('')}}
+const F=[['shield','지원자격 자동진단','내 프로필과 공고 조건을 비교해서 지원 가능한지 항목별로 알려줘요.','pages/recommend.html'],
+['sparkle','추천 이유를 공개해요','점수만 보여 주지 않고 “왜 맞는지”를 문장으로 설명해요.','pages/recommend.html'],
+['board','지원 현황 보드','관심 → 준비 중 → 지원 완료 → 결과까지 한 화면에서 관리해요.','pages/board.html'],
+['calendar','캘린더로 내보내기','마감일을 .ics 파일로 받아 구글·애플 캘린더에 바로 넣어요.','pages/calendar.html']];
+$('feats').innerHTML=F.map(f=>`<a class="feat" href="${f[3]}"><div class="fi">${ico(f[0],22)}</div><h3>${f[1]}</h3><p>${f[2]}</p></a>`).join('');
+$('soon').innerHTML=ITEMS.filter(i=>i.end&&daysLeft(i)>=0).sort(byEnd).slice(0,3).map(card).join('');
+$('list').closest('section').id='cats';
+const L=$('list');let C='전체',S='전체';const SB=$('sort');
+function show(c){if(c){C=c;S='전체'}subBar($('subs'),C,S,x=>{S=x;show()});const r=sortItems(ITEMS.filter(i=>(C==='전체'||i.cat===C)&&subOK(i,C,S)),SB.value);L.innerHTML=r.length?r.map(card).join(''):'<div class="empty">공고가 없어요.</div>'}
+sortBox(SB,()=>show());SB.value='end';
+tabs($('tabs'),show);show('전체');window.addEventListener('aiscores',()=>show());
+$('ct').textContent=m?'지원 현황을 한눈에 관리해 보세요':'프로필을 만들면 더 정확해져요';
+$('cp').textContent=m?'관심 공고를 담고, 준비 단계와 결과까지 기록할 수 있어요.':'학년 · 전공 · 지역을 알려 주면 자격 진단과 추천 이유가 나에게 맞춰져요.';
+$('cb2').innerHTML=(m?'지원 현황 보드 열기 ':'회원가입하고 시작 ')+ico('arrow',16);$('cb2').href=m?'pages/board.html':'pages/login.html';
+$('go').onclick=()=>{location.href='pages/scholarship.html?q='+encodeURIComponent($('q').value)};
+$('q').addEventListener('keydown',e=>{if(e.key==='Enter')$('go').click()});
+</script></body></html>

@@ -1,0 +1,5 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><title>키보드 테스트</title>
+<body style="font-family:sans-serif;padding:24px"><h2>키보드 테스트</h2>
+<p>아래 칸에 영어 abc를 치고 Backspace를 눌러 보세요. 아무 반응이 없으면 웹사이트 문제가 아니라 <b>브라우저/환경 문제</b>입니다.</p>
+<input id="t" style="width:360px;padding:10px;font-size:16px" placeholder="여기에 입력"><pre id="log" style="background:#f3f4f6;padding:12px;height:260px;overflow:auto"></pre>
+<script>const L=document.getElementById('log');['keydown','beforeinput','input','compositionstart','compositionend'].forEach(n=>t.addEventListener(n,e=>{L.textContent+=n+'  key='+(e.key||'')+'  data='+(e.data||'')+'  prevented='+e.defaultPrevented+'\n';L.scrollTop=1e9}));</script></html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../css/style.css"><title>지원 현황 - UniFit-S</title></head><body data-root="../">
+<div class="banner"><div class="wrap"><h2>지원 현황 보드</h2><p>관심 공고를 담고, 준비 중 → 지원 완료 → 결과까지 한 화면에서 관리해요. 카드를 끌어서 옮길 수도 있어요.</p></div></div>
+<div class="wrap" style="margin-top:20px"><div class="stat" id="stat"></div><div class="board" id="board"></div></div>
+<script src="../js/data.js"></script><script src="../js/auth.js"></script><script src="../js/layout.js"></script><script>
+if(!me()){location.href='login.html?next=board.html'}
+const COLS=[{k:'wish',t:'관심',d:'저장한 공고',ic:'bookmark'},{k:'prep',t:'준비 중',d:'서류 · 작품 준비',ic:'clock'},{k:'done',t:'지원 완료',d:'제출을 마쳤어요',ic:'check'},{k:'result',t:'결과',d:'합격 · 불합격',ic:'trophy'}];
+const colOf=s=>s==='pass'||s==='fail'?'result':s;
+const link=i=>'detail.html?id='+encodeURIComponent(i.id);
+function acts(s,id){
+ const b=(a,t,c='',ic='')=>`<button type="button" class="mini ${c}" data-a="${a}" data-id="${esc(id)}">${ic}${t}</button>`;
+ if(s==='wish')return b('prep','준비 시작','pri',ico('arrow',13));
+ if(s==='prep')return b('wish','관심으로','',ico('back',13))+b('done','지원 완료','pri',ico('check',13));
+ if(s==='done')return b('prep','준비 중으로','',ico('back',13))+b('pass','합격','win')+b('fail','불합격','lose');
+ return b('done','결과 취소','',ico('back',13));
+}
+function kcard(x){
+ const {i,s}=x,res=s==='pass'?`<span class="res pass">${ico('trophy',13)} 합격</span>`:s==='fail'?'<span class="res fail">불합격</span>':'';
+ const v=(s==='wish'||s==='prep')?diagMini(i):'';
+ return `<article class="kc" draggable="true" data-id="${esc(i.id)}"><div class="kt"><span class="badge">${i.cat}</span>${res||`<span class="dday">${dday(i.end)}</span>`}<button type="button" class="kx" data-a="del" data-id="${esc(i.id)}" aria-label="목록에서 빼기" title="목록에서 빼기">${ico('x',14)}</button></div>
+ <h4><a href="${link(i)}">${esc(i.title)}</a></h4><small>${esc(i.org)}${i.end?' · 마감 '+i.end:' · 상시모집'}</small>${v}<div class="acts">${acts(s,i.id)}</div></article>`;
+}
+function render(){
+ const its=trackedIds().map(id=>({i:ITEMS.find(x=>x.id===id),s:stageOf(id)})).filter(x=>x.i);
+ const n=(f)=>its.filter(f).length;
+ $('stat').innerHTML=[['관리 중인 공고',its.length],['서둘러 준비할 공고(7일 이내)',n(x=>['wish','prep'].includes(x.s)&&daysLeft(x.i)>=0&&daysLeft(x.i)<=7)],['지원 완료',n(x=>['done','pass','fail'].includes(x.s))],['합격',n(x=>x.s==='pass')]].map(a=>`<div><b>${a[1]}</b><span>${a[0]}</span></div>`).join('');
+ $('board').innerHTML=COLS.map(c=>{
+  const list=its.filter(x=>colOf(x.s)===c.k).sort((a,b)=>daysLeft(a.i)-daysLeft(b.i));
+  return `<section class="col" data-k="${c.k}"><h3><span>${ico(c.ic,16)} ${c.t}</span><span class="cnt">${list.length}</span></h3><p class="sub2">${c.d}</p>${list.map(kcard).join('')||'<p class="colempty">'+(c.k==='wish'?'공고 상세에서 <b>관심 저장</b>을 누르면<br>여기에 모여요':'카드를 끌어다 놓거나<br>버튼으로 옮겨요')+'</p>'}</section>`}).join('');
+}
+const MSG={prep:'준비 중으로 옮겼어요',wish:'관심으로 옮겼어요',done:'지원 완료로 옮겼어요. 마감 알림에도 표시돼요',pass:'합격을 축하해요!',fail:'수고했어요. 다음 기회를 함께 찾아봐요'};
+function move(id,st){const prev=stageOf(id);setStage(id,st);render();toast(MSG[st]||'옮겼어요','되돌리기',()=>{setStage(id,prev);render()})}
+$('board').addEventListener('click',e=>{
+ const b=e.target.closest('[data-a]');if(!b)return;const id=b.dataset.id,a=b.dataset.a;
+ if(a==='del'){const prev=stageOf(id);setStage(id,null);render();toast('목록에서 뺐어요','되돌리기',()=>{setStage(id,prev);render()});return}
+ move(id,a);
+});
+/* 끌어서 옮기기 */
+let dragId=null;
+$('board').addEventListener('dragstart',e=>{const k=e.target.closest('.kc');if(!k)return;dragId=k.dataset.id;k.classList.add('drag');e.dataTransfer.setData('text/plain',dragId);e.dataTransfer.effectAllowed='move'});
+$('board').addEventListener('dragend',e=>{e.target.closest?.('.kc')?.classList.remove('drag');document.querySelectorAll('.col.over').forEach(c=>c.classList.remove('over'))});
+$('board').addEventListener('dragover',e=>{const c=e.target.closest('.col');if(!c)return;e.preventDefault();document.querySelectorAll('.col.over').forEach(x=>x!==c&&x.classList.remove('over'));c.classList.add('over')});
+$('board').addEventListener('drop',e=>{
+ const c=e.target.closest('.col');if(!c||!dragId)return;e.preventDefault();const id=dragId;dragId=null;c.classList.remove('over');
+ const k=c.dataset.k,cur=stageOf(id);if(colOf(cur)===k)return;
+ if(k==='result')return askResult(id);
+ move(id,k);
+});
+function askResult(id){
+ document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="rm"><div class="mbox"><h3>결과를 알려 주세요</h3><p>${esc(ITEMS.find(x=>x.id===id).title)}</p><div class="mrow"><button type="button" class="btn line" id="r0">취소</button><button type="button" class="mini lose big" id="r2">불합격</button><button type="button" class="mini win big" id="r1">합격</button></div></div></div>`);
+ const c=()=>document.getElementById('rm').remove();
+ $('r0').onclick=c;$('r1').onclick=()=>{c();move(id,'pass')};$('r2').onclick=()=>{c();move(id,'fail')};$('rm').onclick=e=>{if(e.target.id==='rm')c()};
+}
+render();
+</script></body></html>
